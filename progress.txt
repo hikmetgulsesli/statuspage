@@ -9,5 +9,23 @@ Started: 2026-02-13 02:12 (Europe/Istanbul)
 - Backend uses ES modules (type: "module" in package.json)
 - Static HTML/JS frontend (no React/framework, vanilla JS)
 - Backend serves health checks for multiple services via /api/status
+- TypeScript is configured for both backend (root tsconfig.json) and frontend (src/tsconfig.json)
+- Tests use node:test, run with `npm test` or `node --test tests/*.test.js`
+- Build process: `npm run build` compiles TypeScript (build:server) then runs Vite build
+- Typecheck with `npm run typecheck` (checks both backend and frontend configs)
 
+---
+
+## 2026-02-13 02:15 - US-001: Initialize TypeScript configuration and project structure
+- Created tsconfig.json in project root for backend with strict mode enabled
+- Created tsconfig.json in src/ for frontend with DOM libs
+- Converted server/index.js to server/index.ts with proper type annotations
+- Added TypeScript interfaces: Service, ServiceStatus, StatusResponse
+- Installed TypeScript dependencies: typescript, @types/node, @types/express, @types/cors, tsx
+- Updated package.json scripts for TypeScript (dev:server, build, build:server, typecheck, test)
+- Created placeholder.ts in src/ to satisfy frontend TypeScript config
+- Created .gitignore to exclude node_modules and dist folders
+- Wrote comprehensive test suite (6 tests) validating TypeScript setup
+- All tests pass, typecheck passes, build succeeds
+- **Learnings:** Project uses ES modules, requires careful tsconfig setup; tsx is useful for dev watching; frontend is vanilla JS for now so only placeholder needed
 ---
