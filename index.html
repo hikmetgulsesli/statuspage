@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StatusPage - OpenClaw Services</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-secondary: #8b949e;
+      --success: #238636;
+      --warning: #f0883e;
+      --danger: #f85149;
+      --accent: #58a6ff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    .status-badge.operational {
+      background: rgba(35, 134, 54, 0.2);
+      color: var(--success);
+    }
+    .status-badge.degraded {
+      background: rgba(240, 136, 62, 0.2);
+      color: var(--warning);
+    }
+    .status-badge.down {
+      background: rgba(248, 81, 73, 0.2);
+      color: var(--danger);
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .service-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .service-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .service-name {
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+    .service-status {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .status-dot.up {
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+    .status-dot.down {
+      background: var(--danger);
+    }
+    .latency {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .last-updated {
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .loading {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>📊 OpenClaw Status</h1>
+    <div id="overallStatus" class="status-badge">Loading...</div>
+    <div class="last-updated" id="lastUpdated"></div>
+  </header>
+
+  <main class="container">
+    <div id="serviceList" class="service-list">
+      <div class="loading">Checking services...</div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>Powered by OpenClaw StatusPage</p>
+  </footer>
+
+  <script>
+    async function fetchStatus() {
+      try {
+        const response = await fetch('/api/status');
+        const data = await response.json();
+        
+        // Overall status
+        const overallBadge = document.getElementById('overallStatus');
+        overallBadge.className = `status-badge ${data.overall}`;
+        overallBadge.textContent = data.overall === 'operational' 
+          ? `✓ All Systems Operational (${data.uptime})`
+          : data.overall === 'degraded' 
+            ? `⚠ Degraded Performance (${data.uptime})`
+            : `✗ Major Outage`;
+        
+        // Last updated
+        document.getElementById('lastUpdated').textContent = 
+          `Last updated: ${new Date(data.lastUpdated).toLocaleString()}`;
+        
+        // Service list
+        const list = document.getElementById('serviceList');
+        list.innerHTML = data.services.map(service => `
+          <div class="service-item">
+            <span class="service-name">${service.name}</span>
+            <div class="service-status">
+              ${service.latency ? `<span class="latency">${service.latency}</span>` : ''}
+              <span class="status-dot ${service.status}"></span>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        document.getElementById('serviceList').innerHTML = `
+          <div class="loading" style="color: var(--danger)">
+            Failed to load status: ${error.message}
+          </div>
+        `;
+      }
+    }
+    
+    // Initial load
+    fetchStatus();
+    
+    // Refresh every 30 seconds
+    setInterval(fetchStatus, 30000);
+  </script>
+</body>
+</html>
