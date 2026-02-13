@@ -91,7 +91,7 @@ app.get('/api/status', async (_req: Request, res: Response) => {
 });
 
 // Static files
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '..')));
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
