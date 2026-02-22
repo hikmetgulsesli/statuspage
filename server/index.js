@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 4505;
+const PORT = process.env.PORT || 3505;
 
 // CORS
 app.use(cors());
@@ -14,6 +14,33 @@ app.use(express.json());
 
 // Uptime Kuma API config
 const UPTIME_KUMA_URL = process.env.UPTIME_KUMA_URL || 'http://localhost:3001';
+
+// Uptime Kuma client
+const uptimeKumaClient = {
+  async getMonitors() { return null; },
+  async getOverallStatus() { return null; },
+  _disabled: true,
+  async getMonitors() {
+    try {
+      const response = await axios.get(`${UPTIME_KUMA_URL}/api/monitors`, {
+        timeout: 5000
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to fetch monitors');
+    }
+  },
+  async getOverallStatus() {
+    try {
+      const response = await axios.get(`${UPTIME_KUMA_URL}/api/status`, {
+        timeout: 5000
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to fetch overall status');
+    }
+  }
+};
 
 // Servis listesi
 const SERVICES = [
@@ -66,7 +93,31 @@ app.get('/api/status', async (req, res) => {
   });
 });
 
-// Static files
+// Uptime Kuma monitors endpoint
+app.get('/api/uptime-kuma/monitors', async (_req, res) => {
+  try {
+    const monitors = null;
+    const overall = null;
+    res.json({
+      monitors,
+      overall,
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    // Return empty data if Uptime Kuma is not available
+    res.json({
+      monitors: [],
+      overall: { status: 'down' },
+      lastUpdated: new Date().toISOString(),
+      error: 'Uptime Kuma not available'
+    });
+  }
+});
+
+// Static files - serve from dist/public after build
+app.use(express.static(path.join(__dirname, '../dist/public')));
+
+// Fallback to public for development
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Health check
@@ -74,6 +125,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'statuspage' });
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`📊 StatusPage API running on port ${PORT}`);
 });
+
